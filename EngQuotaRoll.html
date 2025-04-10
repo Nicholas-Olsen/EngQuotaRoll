@@ -108,34 +108,34 @@
 
   <h1>다음 할당량 무작위 예측기</h1>
 
-  <label for="quota">현재 할당량 ($130 이상):</label>
+  <label for="quota">Quota now($130 이상):</label>
   <input type="number" id="quota" min="130" value="130" />
 
-  <label for="runs">완주한 횟수 (1 이상):</label>
+  <label for="runs">Past weeks :</label>
   <input type="number" id="runs" min="1" value="1" />
 
-  <button onclick="updatePrediction()">예측</button>
+  <button onclick="updatePrediction()">Roll</button>
 
   <div id="result" class="result">$0</div>
 
   <table>
-    <tr><th>최대</th><td id="maxVal">$0</td></tr>
-    <tr><th>평균</th><td id="avgVal">$0</td></tr>
-    <tr><th>최소</th><td id="minVal">$0</td></tr>
+    <tr><th>Max</th><td id="maxVal">$0</td></tr>
+    <tr><th>Ave</th><td id="avgVal">$0</td></tr>
+    <tr><th>Min</th><td id="minVal">$0</td></tr>
   </table>
-
+  <label>Ship Furniture</label>
   <div class="furniture-grid" id="furnitureList"></div>
 
-  <button id="toggleLogBtn">로그 보기</button>
+  <button id="toggleLogBtn">Log</button>
   <div id="log"></div>
 
   <script>
     const furnitureData = [
-      ["신호 해석기", -0.012], ["시끄러운 경적", 0.0025], ["웰컴매트", 0.003],
-      ["인형 파자마 맨", 0.003], ["테이블", 0.004], ["역방향 순간이동기", 0.004],
-      ["아늑한 조명", 0.005], ["레코드 플레이어", 0.005], ["로맨틱한 테이블", 0.005],
-      ["금붕어", 0.006], ["변기", 0.01], ["잭오랜턴", 0.012],
-      ["샤워 부스", 0.015], ["텔레비전", 0.02], ["디스코 볼", 0.06]
+      ["Signal Translator", -0.012], ["Loud Horn", 0.0025], ["Welcome Mat", 0.003],
+      ["Plushie man", 0.003], ["Table", 0.004], ["Reverse-teleporter", 0.004],
+      ["Cozy Lights", 0.005], ["Record Player", 0.005], ["Romantic Table", 0.005],
+      ["Goldfish", 0.006], ["Toilet", 0.01], ["Jack O'Lantern", 0.012],
+      ["Shower", 0.015], ["Television", 0.02], ["Disco Ball", 0.06]
     ];
 
     const listContainer = document.getElementById("furnitureList");
