@@ -119,14 +119,14 @@
   <div id="result" class="result">$0</div>
 
   <table>
-    <tr><th>Max</th><td id="maxVal">$0</td></tr>
-    <tr><th>Ave</th><td id="avgVal">$0</td></tr>
     <tr><th>Min</th><td id="minVal">$0</td></tr>
+    <tr><th>Ave</th><td id="avgVal">$0</td></tr>
+    <tr><th>Max</th><td id="maxVal">$0</td></tr>
   </table>
   <label>Ship Furniture</label>
   <div class="furniture-grid" id="furnitureList"></div>
 
-  <button id="toggleLogBtn">Log</button>
+  <button id="toggleLogBtn">Logs</button>
   <div id="log"></div>
 
   <script>
@@ -153,7 +153,7 @@
     const toggleLogBtn = document.getElementById("toggleLogBtn");
     toggleLogBtn.addEventListener("click", () => {
       logContainer.classList.toggle("open");
-      toggleLogBtn.textContent = logContainer.classList.contains("open") ? "로그 숨기기" : "로그 보기";
+      toggleLogBtn.textContent = logContainer.classList.contains("open") ? "Hide Logs" : "Check Logs";
     });
 
     function getL() {
@@ -165,7 +165,7 @@
       return sum;
     }
 
-    // 개선된 inverse error function 근사
+    // inverse error function 근사
     function erfInv(x) {
       const a = 0.140012; // Hastings의 근사 계수
       const sign = x < 0 ? -1 : 1;
@@ -177,7 +177,7 @@
 
   function F(x, runs) {
   const baseSigma = 38.197;
-  const sigma = baseSigma * Math.sqrt(runs);  // 또는 log(runs + 1) 등
+  const sigma = baseSigma * Math.sqrt(runs);  // Or log(runs + 1) ...
   const sqrt2 = Math.sqrt(2);
 
   if (x <= 0) return -sigma * sqrt2;
@@ -194,7 +194,6 @@ function calcPrediction(Q1, L, Q2, quota, runs) {
   const R = F(Q, runs) + 1;
   return Math.floor(R + Q1 + quota);
 }
-
     function updatePrediction() {
       const quota = Math.max(130, parseInt(document.getElementById("quota").value) || 130);
       const runs = Math.max(1, parseInt(document.getElementById("runs").value) || 1);
