@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Try Rolling next Quota</title>
+  <style>
+    body {
+      background-color: #333333;
+      color: #99ff99;
+      font-family: Sans-serif;
+      font-weight: bold;
+    }
+
+    h1 {
+      color: #0f0;
+      text-align: center;
+      margin-bottom: 1em;
+    }
+
+    label {
+      display: block;
+      margin: 1em 0 0.5em;
+      font-weight: bold;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 0.4em;
+      font-size: 1em;
+      border-radius: 0.5em;
+      border: none;
+      background-color: #222;
+      color: #0f0;
+    }
+
+    button {
+      background-color: #0f0;
+      color: #000;
+      border: none;
+      border-radius: 1em;
+      padding: 0.7em 1.5em;
+      font-weight: bold;
+      font-size: 1.1em;
+      cursor: pointer;
+      margin-top: 1em;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 1.5em;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #0f0;
+      padding: 0.5em;
+      text-align: left;
+    }
+
+    .result {
+      margin-top: 1em;
+      font-size: 2em;
+      font-weight: bold;
+      color: #0f0;
+      border: 2px solid #0f0;
+      border-radius: 1em;
+      padding: 0.5em 1em;
+      display: inline-block;
+    }
+
+    #log {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+      margin-top: 1em;
+      background-color: #222;
+      border-radius: 1em;
+      padding: 0 1em;
+    }
+
+    #log.open {
+      padding: 1em;
+      max-height: 500px;
+      transition: max-height 0.5s ease-in, padding 0.5s ease-in;
+    }
+
+    #toggleLogBtn {
+      margin-top: 2em;
+    }
+
+    .furniture-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5em;
+      margin-top: 1em;
+    }
+
+    .furniture-grid label {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>다음 할당량 무작위 예측기</h1>
+
+  <label for="quota">현재 할당량 ($130 이상):</label>
+  <input type="number" id="quota" min="130" value="130" />
+
+  <label for="runs">완주한 횟수 (1 이상):</label>
+  <input type="number" id="runs" min="1" value="1" />
+
+  <button onclick="updatePrediction()">예측</button>
+
+  <div id="result" class="result">$0</div>
+
+  <table>
+    <tr><th>최대</th><td id="maxVal">$0</td></tr>
+    <tr><th>평균</th><td id="avgVal">$0</td></tr>
+    <tr><th>최소</th><td id="minVal">$0</td></tr>
+  </table>
+
+  <div class="furniture-grid" id="furnitureList"></div>
+
+  <button id="toggleLogBtn">로그 보기</button>
+  <div id="log"></div>
+
+  <script>
+    const furnitureData = [
+      ["신호 해석기", -0.012], ["시끄러운 경적", 0.0025], ["웰컴매트", 0.003],
+      ["인형 파자마 맨", 0.003], ["테이블", 0.004], ["역방향 순간이동기", 0.004],
+      ["아늑한 조명", 0.005], ["레코드 플레이어", 0.005], ["로맨틱한 테이블", 0.005],
+      ["금붕어", 0.006], ["변기", 0.01], ["잭오랜턴", 0.012],
+      ["샤워 부스", 0.015], ["텔레비전", 0.02], ["디스코 볼", 0.06]
+    ];
+
+    const listContainer = document.getElementById("furnitureList");
+    furnitureData.forEach(([name], i) => {
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.dataset.value = furnitureData[i][1];
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(name));
+      listContainer.appendChild(label);
+    });
+
+    const logContainer = document.getElementById("log");
+    const toggleLogBtn = document.getElementById("toggleLogBtn");
+    toggleLogBtn.addEventListener("click", () => {
+      logContainer.classList.toggle("open");
+      toggleLogBtn.textContent = logContainer.classList.contains("open") ? "로그 숨기기" : "로그 보기";
+    });
+
+    function getL() {
+      const checkboxes = listContainer.querySelectorAll("input[type='checkbox']");
+      let sum = 0;
+      checkboxes.forEach(cb => {
+        if (cb.checked) sum += parseFloat(cb.dataset.value);
+      });
+      return sum;
+    }
+
+    // 개선된 inverse error function 근사
+    function erfInv(x) {
+      const a = 0.140012; // Hastings의 근사 계수
+      const sign = x < 0 ? -1 : 1;
+      const ln = Math.log(1 - x * x);
+      const tt1 = 2 / (Math.PI * a) + ln / 2;
+      const tt2 = ln / a;
+      return sign * Math.sqrt(Math.sqrt(tt1 * tt1 - tt2) - tt1);
+    }
+
+  function F(x, runs) {
+  const baseSigma = 38.197;
+  const sigma = baseSigma * Math.sqrt(runs);  // 또는 log(runs + 1) 등
+  const sqrt2 = Math.sqrt(2);
+
+  if (x <= 0) return -sigma * sqrt2;
+  if (x >= 1) return sigma * sqrt2;
+
+  const clamped = Math.max(1e-10, Math.min(1 - 1e-10, x));
+  const erfArg = 2 * clamped - 1;
+  const invErf = erfInv(erfArg);
+  return sqrt2 * sigma * invErf;
+}
+
+function calcPrediction(Q1, L, Q2, quota, runs) {
+  const Q = Math.abs(1 - L) * Q2;
+  const R = F(Q, runs) + 1;
+  return Math.floor(R + Q1 + quota);
+}
+
+    function updatePrediction() {
+      const quota = Math.max(130, parseInt(document.getElementById("quota").value) || 130);
+      const runs = Math.max(1, parseInt(document.getElementById("runs").value) || 1);
+      const Q1 = 6.25 * runs * runs + 100;
+      const L = getL();
+      const Q2 = Math.round(Math.random() * 10000) / 10000;
+
+	const result = calcPrediction(Q1, L, Q2, quota, runs);
+
+      document.getElementById("result").textContent = `$${result}`;
+      document.getElementById("minVal").textContent = `$${calcPrediction(Q1, L, 0, quota, runs)}`;
+      document.getElementById("avgVal").textContent = `$${calcPrediction(Q1, L, 0.5, quota, runs)}`;
+      document.getElementById("maxVal").textContent = `$${calcPrediction(Q1, L, 1, quota, runs)}`;
+
+      appendLog(`• Q=${Math.abs(1 - L).toFixed(4)} × Q2=${Q2.toFixed(4)} → <strong>$${result}</strong>`);
+    }
+
+    function appendLog(text) {
+      const logEntries = logContainer.innerHTML.split("<br/>").filter(line => line.includes("•"));
+      logEntries.push(text);
+      while (logEntries.length > 15) logEntries.shift();
+      logContainer.innerHTML = logEntries.join("<br/>");
+    }
+  </script>
+
+</body>
+</html>
